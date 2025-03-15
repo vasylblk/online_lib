@@ -1,0 +1,27 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Директории, специфичные для WebStorm (и JetBrains IDE)
+.idea/
+
+# Операционные системы
+.DS_Store
+Thumbs.db
+
+# Прочие
+.env
+*.log
+
+# Прочие IDE и редакторы
+.vscode/
+
+# Папки, создаваемые при сборке проекта
+/dist
+/build
+/.next
+
+# Папки и файлы, которые генерируются при выполнении тестов
+coverage/
