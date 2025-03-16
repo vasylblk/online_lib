@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { UserController } from '.././modules/users/user.controller';
+import { UserController } from '../modules/users/user.controller';
 import * as dotenv from 'dotenv';
 
 dotenv.config(); // Завантажуємо змінні оточення

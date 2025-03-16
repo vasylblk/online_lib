@@ -27,4 +27,9 @@ export class UserController {
   async getUserById(@Payload() id: string) {
     return this.userService.getUserById(id);
   }
+
+  @MessagePattern({ cmd: 'delete_user' })
+  async deleteUser(@Payload() id: string) {
+    return this.userService.deleteUser(id);
+  }
 }

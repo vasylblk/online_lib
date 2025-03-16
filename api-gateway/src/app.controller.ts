@@ -14,7 +14,7 @@ export class AppController {
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
   ) {}
 
-  @Post()
+  @Post('register')
   async createUser(
     @Body() data: { name: string; email: string; password: string },
   ): Promise<UserResponse> {
@@ -28,5 +28,10 @@ export class AppController {
     return firstValueFrom(
       this.userService.send<UserResponse>({ cmd: 'get_user_by_id' }, id),
     );
+  }
+
+  @Get()
+  getHello(): string {
+    return 'Hello World!';
   }
 }

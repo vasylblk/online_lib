@@ -9,14 +9,15 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { User } from './dto';
 
 @Controller('users')
 export class UserController {
   constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}
 
-  @Post()
+  // Изменяем маршрут с /users на /users/register
+  @Post('register')
   register(@Body() userDto: User): Observable<any> {
     return this.client.send({ cmd: 'create_user' }, userDto);
   }
@@ -44,8 +45,8 @@ export class UserController {
   }
 
   @Delete(':id')
-  deleteUser(@Param('id') id: string): Observable<any> {
-    return this.client.send({ cmd: 'delete_user' }, { id });
+  async deleteUser(@Param('id') id: string): Promise<any> {
+    return firstValueFrom(this.client.send({ cmd: 'delete_user' }, id));
   }
 
   @Get('email/:email')
