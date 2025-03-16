@@ -23,6 +23,7 @@ export class AppController {
     );
   }
 
+  // по ID
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<UserResponse> {
     return firstValueFrom(
@@ -30,8 +31,11 @@ export class AppController {
     );
   }
 
+  // всіх
   @Get()
-  getHello(): string {
-    return 'Hello World!';
+  async getUsers(): Promise<UserResponse[]> {
+    return firstValueFrom(
+      this.userService.send<UserResponse[]>({ cmd: 'get_users' }, {}),
+    );
   }
 }
