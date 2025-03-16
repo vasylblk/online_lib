@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Inject,
+  Put,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -20,6 +28,17 @@ export class AppController {
   ): Promise<UserResponse> {
     return firstValueFrom(
       this.userService.send<UserResponse>({ cmd: 'register_user' }, data),
+    );
+  }
+
+  // обнова
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() data: { name: string; email: string; password: string },
+  ): Promise<UserResponse> {
+    return firstValueFrom(
+      this.userService.send<UserResponse>({ cmd: 'update_user' }, { id, data }),
     );
   }
 

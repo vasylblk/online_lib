@@ -83,4 +83,22 @@ export class UserService {
 
     await this.userRepository.delete(id);
   }
+
+  async updateUser(
+    id: string,
+    data: { name: string; email: string; password: string },
+  ): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id } });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Оновлюємо дані
+    user.name = data.name;
+    user.email = data.email;
+    user.password = await bcrypt.hash(data.password, 10); // хеш нового паролю
+
+    return this.userRepository.save(user);
+  }
 }

@@ -18,6 +18,20 @@ export class UserController {
     return this.userService.login(credentials.email, credentials.password);
   }
 
+  @MessagePattern({ cmd: 'update_user' })
+  async updateUser(
+    @Payload()
+    {
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name: string; email: string; password: string };
+    },
+  ) {
+    return this.userService.updateUser(id, data);
+  }
+
   @MessagePattern({ cmd: 'get_users' })
   async getUsers() {
     return this.userService.getAllUsers();
