@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import * as bcrypt from 'bcryptjs';
+import { UnauthorizedException } from '@nestjs/common';
 
 @Injectable()
 export class UserService {
@@ -38,7 +39,6 @@ export class UserService {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  // 🟢 Додаємо метод для отримання користувача за ID
   async getUserById(id: string): Promise<User> {
     // UUID — это строка
     const user = await this.userRepository.findOne({
@@ -51,5 +51,26 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async login(email: string, password: string) {
+    const user = await this.userRepository.findOne({ where: { email } });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at,
+    };
   }
 }

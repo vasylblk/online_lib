@@ -13,12 +13,16 @@ export class UserController {
     return this.userService.createUser(data.name, data.email, data.password);
   }
 
+  @MessagePattern({ cmd: 'login_user' })
+  async login(@Payload() credentials: { email: string; password: string }) {
+    return this.userService.login(credentials.email, credentials.password);
+  }
+
   @MessagePattern({ cmd: 'get_users' })
   async getUsers() {
     return this.userService.getAllUsers();
   }
 
-  // 🟢 Додаємо отримання користувача за ID
   @MessagePattern({ cmd: 'get_user_by_id' })
   async getUserById(@Payload() id: string) {
     return this.userService.getUserById(id);
