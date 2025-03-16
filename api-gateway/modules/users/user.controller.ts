@@ -35,8 +35,9 @@ export class UserController {
 
   @Get(':id')
   getUserById(@Param('id') id: string): Observable<any> {
-    return this.client.send({ cmd: 'get_user_by_id' }, { id });
+    return this.client.send({ cmd: 'get_user_by_id' }, id); // Убираем { id }
   }
+
 
   @Put(':id')
   updateUser(@Param('id') id: string, @Body() userDto: User): Observable<any> {

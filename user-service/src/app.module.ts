@@ -16,11 +16,11 @@ import { AppService } from './app.service'; // Додаємо сервіс
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DB_HOST') || 'localhost',
-        port: configService.get<number>('DB_PORT') || 5432,
-        username: configService.get<string>('DB_USER') || 'postgres',
-        password: configService.get<string>('DB_PASSWORD') || 'yourpassword',
-        database: configService.get<string>('DB_NAME') || 'online_library',
+        host: configService.get<string>('DATABASE_HOST') || 'postgres',
+        port: configService.get<number>('DATABASE_PORT') || 5432,
+        username: configService.get<string>('DATABASE_USER') || 'postgres',
+        password: configService.get<string>('DATABASE_PASSWORD') || 'password',
+        database: configService.get<string>('DATABASE_NAME') || 'users_db',
         entities: [User],
         autoLoadEntities: true,
         synchronize: true,
@@ -40,7 +40,8 @@ import { AppService } from './app.service'; // Додаємо сервіс
               configService.get<string>('RABBITMQ_URL') ||
                 'amqp://guest:guest@localhost:5672',
             ],
-            queue: 'user_queue',
+            queue:
+              configService.get<string>('USER_SERVICE_QUEUE') || 'user-service',
             queueOptions: { durable: false },
           },
         }),

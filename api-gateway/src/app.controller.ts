@@ -1,45 +1,32 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import {
-  ClientProxy,
-  ClientProxyFactory,
-  Transport,
-} from '@nestjs/microservices';
+import { Controller, Get, Post, Body, Param, Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+
+interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+}
 
 @Controller('users')
 export class AppController {
-  private client: ClientProxy;
-
-  constructor() {
-    this.client = ClientProxyFactory.create({
-      transport: Transport.RMQ, // або інший транспорт
-      options: {
-        urls: ['amqp://localhost:5672'], // Зміни URL, якщо потрібно
-        queue: 'user_queue',
-        queueOptions: { durable: false },
-      },
-    });
-  }
+  constructor(
+    @Inject('USER_SERVICE') private readonly userService: ClientProxy,
+  ) {}
 
   @Post()
   async createUser(
     @Body() data: { name: string; email: string; password: string },
-  ) {
+  ): Promise<UserResponse> {
     return firstValueFrom(
-      this.client.send<{ id: number; name: string; email: string }>(
-        { cmd: 'register_user' },
-        data,
-      ),
+      this.userService.send<UserResponse>({ cmd: 'register_user' }, data),
     );
   }
 
   @Get(':id')
-  async getUserById(@Param('id') id: number) {
+  async getUserById(@Param('id') id: string): Promise<UserResponse> {
     return firstValueFrom(
-      this.client.send<{ id: number; name: string; email: string }>(
-        { cmd: 'get_user_by_id' },
-        Number(id),
-      ),
+      this.userService.send<UserResponse>({ cmd: 'get_user_by_id' }, id),
     );
   }
 }

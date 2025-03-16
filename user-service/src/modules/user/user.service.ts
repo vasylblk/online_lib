@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -39,9 +39,10 @@ export class UserService {
   }
 
   // 🟢 Додаємо метод для отримання користувача за ID
-  async getUserById(id: number) {
+  async getUserById(id: string): Promise<User> {
+    // UUID — это строка
     const user = await this.userRepository.findOne({
-      where: { id: Number(id) },
+      where: { id }, // Не конвертируем в Number, UUID строка
       select: ['id', 'name', 'email', 'role', 'created_at'],
     });
 
