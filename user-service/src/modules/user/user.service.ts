@@ -12,7 +12,6 @@ export class UserService {
 
   async createUser(name: string, email: string, password: string) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const hashedPassword: string = await bcrypt.hash(password, 10);
 
       const newUser = this.userRepository.create({

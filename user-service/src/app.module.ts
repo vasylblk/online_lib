@@ -1,24 +1,51 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { databaseConfig } from './config/database.config';
-import { UserModule } from './modules/user/user.module';
-import { Transport, ClientsModule } from '@nestjs/microservices';
+import { User } from './entities/user.entity'; // Сутність користувача
+import { UserModule } from './modules/user/user.module'; // Правильний імпорт
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot(databaseConfig),
-    UserModule,
-    ClientsModule.register([
+    ConfigModule.forRoot({ isGlobal: true }),
+
+    // Підключення до PostgreSQL через TypeORM
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST') || 'localhost',
+        port: configService.get<number>('DB_PORT') || 5432,
+        username: configService.get<string>('DB_USER') || 'postgres',
+        password: configService.get<string>('DB_PASSWORD') || 'yourpassword',
+        database: configService.get<string>('DB_NAME') || 'online_library',
+        entities: [User], // Підключаємо сутності
+        synchronize: true, // Автоматично створює таблиці (тільки для розробки!)
+      }),
+    }),
+
+    // RabbitMQ
+    ClientsModule.registerAsync([
       {
-        name: 'USER_SERVICE',
-        transport: Transport.RMQ,
-        options: {
-          urls: [process.env.BROKER_URL ?? 'amqp://localhost'],
-          queue: process.env.USER_SERVICE_QUEUE ?? 'user_queue',
-          queueOptions: { durable: false },
-        },
+        name: 'RABBITMQ_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [
+              configService.get<string>('RABBITMQ_URL') ||
+                'amqp://guest:guest@localhost:5672',
+            ],
+            queue: 'user_queue',
+            queueOptions: { durable: false },
+          },
+        }),
       },
     ]),
+
+    UserModule, // Правильна назва модуля
   ],
 })
 export class AppModule {}
