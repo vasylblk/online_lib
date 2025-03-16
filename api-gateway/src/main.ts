@@ -5,9 +5,14 @@ import { ValidationPipe } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// завантажуємо змінні оточенння
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+// Визначаємо правильний шлях до .env
+const envPath = path.resolve(
+  __dirname,
+  process.env.NODE_ENV === 'production' ? '../.env' : '../../.env',
+);
+dotenv.config({ path: envPath });
 
+console.log('Using .env from:', envPath);
 console.log('Loaded RABBITMQ_URL:', process.env.RABBITMQ_URL);
 console.log('Loaded USER_SERVICE_QUEUE:', process.env.USER_SERVICE_QUEUE);
 console.log('Loaded PORT:', process.env.PORT);
@@ -23,7 +28,9 @@ async function bootstrap() {
     app.setGlobalPrefix('api');
 
     // включаємо глобальну валідацію (захист від некоректних даних)
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
 
     // перевіряємо чи завантажені потрібні змінні оточення
     const rabbitMqUrl = process.env.RABBITMQ_URL;

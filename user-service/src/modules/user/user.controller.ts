@@ -17,4 +17,10 @@ export class UserController {
   async getUsers() {
     return this.userService.getAllUsers();
   }
+
+  // 🟢 Додаємо отримання користувача за ID
+  @MessagePattern({ cmd: 'get_user_by_id' })
+  async getUserById(@Payload() id: number) {
+    return this.userService.getUserById(id);
+  }
 }

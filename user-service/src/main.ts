@@ -16,19 +16,24 @@ async function bootstrap() {
   }
 
   try {
-    const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-      AppModule,
-      {
+    // Запуск HTTP API
+    const app = await NestFactory.create(AppModule);
+    const port = process.env.PORT || 3000;
+    await app.listen(port);
+    console.log(`✅ HTTP API is running on http://localhost:${port}`);
+
+    // Запуск мікросервісу
+    const microservice =
+      await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
         transport: Transport.RMQ,
         options: {
           urls: [rabbitMqUrl],
           queue: 'user_service_queue',
           queueOptions: { durable: false },
         },
-      },
-    );
+      });
 
-    await app.listen();
+    await microservice.listen();
     console.log(
       `✅ User Service is running and connected to RabbitMQ on ${rabbitMqUrl}`,
     );
@@ -38,5 +43,4 @@ async function bootstrap() {
   }
 }
 
-// Исправленный вызов:
 void bootstrap();

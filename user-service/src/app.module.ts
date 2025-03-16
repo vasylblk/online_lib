@@ -2,14 +2,15 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity'; // Сутність користувача
-import { UserModule } from './modules/user/user.module'; // Правильний імпорт
+import { User } from './entities/user.entity';
+import { UserModule } from './modules/user/user.module';
+import { AppController } from './app.controller'; // Додаємо контролер
+import { AppService } from './app.service'; // Додаємо сервіс
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // Підключення до PostgreSQL через TypeORM
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -20,12 +21,13 @@ import { UserModule } from './modules/user/user.module'; // Правильний
         username: configService.get<string>('DB_USER') || 'postgres',
         password: configService.get<string>('DB_PASSWORD') || 'yourpassword',
         database: configService.get<string>('DB_NAME') || 'online_library',
-        entities: [User], // Підключаємо сутності
-        synchronize: true, // Автоматично створює таблиці (тільки для розробки!)
+        entities: [User],
+        autoLoadEntities: true,
+        synchronize: true,
+        logging: true,
       }),
     }),
 
-    // RabbitMQ
     ClientsModule.registerAsync([
       {
         name: 'RABBITMQ_SERVICE',
@@ -45,7 +47,9 @@ import { UserModule } from './modules/user/user.module'; // Правильний
       },
     ]),
 
-    UserModule, // Правильна назва модуля
+    UserModule,
   ],
+  controllers: [AppController], // Додаємо AppController
+  providers: [AppService], // Додаємо AppService
 })
 export class AppModule {}

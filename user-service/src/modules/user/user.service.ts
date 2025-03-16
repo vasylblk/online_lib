@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
@@ -13,7 +13,6 @@ export class UserService {
   async createUser(name: string, email: string, password: string) {
     try {
       const hashedPassword: string = await bcrypt.hash(password, 10);
-
       const newUser = this.userRepository.create({
         name,
         email,
@@ -37,5 +36,19 @@ export class UserService {
 
   async getUserByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  // 🟢 Додаємо метод для отримання користувача за ID
+  async getUserById(id: number) {
+    const user = await this.userRepository.findOne({
+      where: { id: Number(id) },
+      select: ['id', 'name', 'email', 'role', 'created_at'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
   }
 }
