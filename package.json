@@ -17,10 +17,13 @@
   },
   "dependencies": {
     "@nestjs/config": "^4.0.1",
+    "@nestjs/jwt": "^11.0.0",
     "@nestjs/microservices": "^11.0.11",
     "@nestjs/testing": "^11.0.11",
     "@nestjs/typeorm": "^11.0.0",
     "amqplib": "^0.10.5",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.14.0",
     "typeorm": "^0.3.21"
   }
