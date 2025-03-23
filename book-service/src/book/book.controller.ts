@@ -1,13 +1,22 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { BookService } from './book.service';
+import { CreateBookDto, UpdateBookDto } from '././dto/book.dto';
 
 @Controller('books')
 export class BookController {
   constructor(private readonly bookService: BookService) {}
 
   @Post()
-  create(@Body() data: any) {
-    return this.bookService.create(data);
+  create(@Body() createBookDto: CreateBookDto) {
+    return this.bookService.create(createBookDto);
   }
 
   @Get()
@@ -16,26 +25,17 @@ export class BookController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.bookService.findOne(+id);
+  findOne(@Param('id') id: string) {
+    return this.bookService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() data: any) {
-    return this.bookService.update(+id, data);
+  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
+    return this.bookService.update(id, updateBookDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.bookService.delete(+id);
-  }
-
-  @Get('/filter')
-  filter(
-    @Query('genre') genre?: string,
-    @Query('author') author?: string,
-    @Query('year') year?: string,
-  ) {
-    return this.bookService.filter(genre, author, year ? +year : undefined);
+  remove(@Param('id') id: string) {
+    return this.bookService.remove(id);
   }
 }

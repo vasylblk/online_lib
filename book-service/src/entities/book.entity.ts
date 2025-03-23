@@ -1,9 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
-@Entity()
+@Entity('books')
 export class Book {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   title: string;
@@ -14,6 +19,15 @@ export class Book {
   @Column()
   genre: string;
 
+  @Column({ type: 'text' })
+  description: string;
+
   @Column()
-  year: number;
+  publication_year: number;
+
+  @Column()
+  file_url: string;
+
+  @CreateDateColumn()
+  created_at: Date;
 }

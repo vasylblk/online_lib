@@ -1,42 +1,40 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Book } from '../entities/book.entity';
+import { CreateBookDto, UpdateBookDto } from '././dto/book.dto';
 
 @Injectable()
 export class BookService {
   constructor(
     @InjectRepository(Book)
-    private readonly bookRepo: Repository<Book>,
+    private bookRepository: Repository<Book>,
   ) {}
 
-  create(bookData: Partial<Book>) {
-    const book = this.bookRepo.create(bookData);
-    return this.bookRepo.save(book);
+  async create(createBookDto: CreateBookDto): Promise<Book> {
+    const book = this.bookRepository.create(createBookDto);
+    return await this.bookRepository.save(book);
   }
 
-  findAll() {
-    return this.bookRepo.find();
+  async findAll(): Promise<Book[]> {
+    return await this.bookRepository.find();
   }
 
-  findOne(id: number) {
-    return this.bookRepo.findOne({ where: { id } });
+  async findOne(id: string): Promise<Book> {
+    console.log(`Searching for book with ID: ${id}`); // для дебагу
+    const book = await this.bookRepository.findOne({ where: { id } });
+    if (!book) throw new NotFoundException(`Book with ID ${id} not found`);
+    return book;
   }
 
-  update(id: number, bookData: Partial<Book>) {
-    return this.bookRepo.update(id, bookData);
+  async update(id: string, updateBookDto: UpdateBookDto): Promise<Book> {
+    const book = await this.findOne(id);
+    Object.assign(book, updateBookDto);
+    return await this.bookRepository.save(book);
   }
 
-  delete(id: number) {
-    return this.bookRepo.delete(id);
-  }
-
-  filter(genre?: string, author?: string, year?: number) {
-    const where: any = {};
-    if (genre) where.genre = Like(`%${genre}%`);
-    if (author) where.author = Like(`%${author}%`);
-    if (year) where.year = year;
-
-    return this.bookRepo.find({ where });
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    await this.bookRepository.delete(id);
   }
 }
