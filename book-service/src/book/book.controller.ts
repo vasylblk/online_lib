@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { CreateBookDto, UpdateBookDto } from '././dto/book.dto';
+import { Query } from '@nestjs/common';
 
 @Controller('books')
 export class BookController {
@@ -37,5 +38,15 @@ export class BookController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.bookService.remove(id);
+  }
+
+  // фильтр
+  @Get()
+  findFiltered(
+    @Query('genre') genre?: string,
+    @Query('author') author?: string,
+    @Query('publication_year') publication_year?: number,
+  ) {
+    return this.bookService.findFiltered(genre, author, publication_year);
   }
 }

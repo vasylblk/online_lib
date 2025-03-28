@@ -37,4 +37,29 @@ export class BookService {
     await this.findOne(id);
     await this.bookRepository.delete(id);
   }
+
+  // фильтр
+  async findFiltered(
+    genre?: string,
+    author?: string,
+    publication_year?: number,
+  ): Promise<Book[]> {
+    const query = this.bookRepository.createQueryBuilder('book');
+
+    if (genre) {
+      query.andWhere('book.genre = :genre', { genre });
+    }
+
+    if (author) {
+      query.andWhere('book.author = :author', { author });
+    }
+
+    if (publication_year) {
+      query.andWhere('book.publication_year = :publication_year', {
+        publication_year,
+      });
+    }
+
+    return await query.getMany();
+  }
 }
