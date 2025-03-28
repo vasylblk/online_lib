@@ -1,18 +1,27 @@
-/* import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { Module } from '@nestjs/common';
+import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { AuthService } from './auth.service';
-import { UserService } from '../user/user.service';
-import { JwtStrategy } from './jwt.strategy'; // стратегія для роботи з JWT
-import { JwtAuthGuard } from './jwt-auth.guard'; // Guard для захисту маршрутів
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
-  imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET_KEY || 'secret', // секретний ключ для підпису JWT
-      signOptions: { expiresIn: '60m' }, // час дії токена
-    }),
+  providers: [
+    AuthService,
+    JwtService,
+    {
+      provide: 'AUTH_SERVICE',
+      useFactory: () => {
+        return ClientProxyFactory.create({
+          transport: Transport.RMQ, // Указуємо Transport, але використовуємо правильні налаштування
+          options: {
+            urls: [process.env.RABBITMQ_URL],
+            queue: process.env.AUTH_SERVICE_QUEUE,
+            queueOptions: { durable: true },
+            noAck: false, // За потреби можна додати інші параметри
+          },
+        });
+      },
+    },
   ],
-  providers: [AuthService, UserService, JwtStrategy, JwtAuthGuard],
-  exports: [AuthService], // єскпорт AuthService для використ в інших модулях
+  exports: [AuthService],
 })
-export class AuthModule {} */
+export class AuthModule {}

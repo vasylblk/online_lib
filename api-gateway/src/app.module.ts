@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { UserController } from '../modules/users/user.controller';
 import * as dotenv from 'dotenv';
 
-dotenv.config(); // Завантажуємо змінні оточення
+dotenv.config(); // Завантажуємо .env
 
 @Module({
   imports: [
@@ -19,9 +19,18 @@ dotenv.config(); // Завантажуємо змінні оточення
           queueOptions: { durable: false },
         },
       },
+      {
+        name: 'AUTH_SERVICE', // 🔥 ось це додай
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.AUTH_SERVICE_QUEUE || 'auth_service_queue', // або назва черги для auth
+          queueOptions: { durable: false },
+        },
+      },
     ]),
   ],
-  controllers: [AppController, UserController], // Додаємо UserController
+  controllers: [AppController, UserController],
   providers: [AppService],
 })
 export class AppModule {}

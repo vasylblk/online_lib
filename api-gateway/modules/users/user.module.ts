@@ -1,33 +1,37 @@
 import { Module } from '@nestjs/common';
-import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { JwtAuthGuard } from '../../guards/auth.guard';
+import { RolesGuard } from '../../guards/roles.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
+  imports: [
+    ClientsModule.register([
+      {
+        name: 'USER_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.USER_SERVICE_QUEUE || 'users_queue',
+          queueOptions: { durable: false },
+        },
+      },
+    ]),
+  ],
   controllers: [UserController],
   providers: [
     UserService,
+
+    // 🛡️ Автоматичне підключення guard-ів
     {
-      provide: 'USER_SERVICE',
-      useFactory: () => {
-        const rabbitMqUrl = process.env.RABBITMQ_URL; // Приводим к единому названию
-        const queueName = process.env.USER_SERVICE_QUEUE;
-
-        if (!rabbitMqUrl || !queueName) {
-          throw new Error(
-            '❌ RABBITMQ_URL или USER_SERVICE_QUEUE не заданы в .env файле',
-          );
-        }
-
-        return ClientProxyFactory.create({
-          transport: Transport.RMQ,
-          options: {
-            urls: [rabbitMqUrl],
-            queue: queueName,
-            queueOptions: { durable: true },
-          },
-        });
-      },
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })

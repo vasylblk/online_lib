@@ -1,48 +1,54 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+  Inject,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import * as bcrypt from 'bcryptjs';
-import { UnauthorizedException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { lastValueFrom } from 'rxjs';
+import { patterns } from '../patterns';
+import { Tokens } from '../auth/dto'; // Перевірте, чи у вас є такий DTO
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
+      @InjectRepository(User) private userRepository: Repository<User>,
+
+      @Inject('AUTH_SERVICE') // 🔐 Інжектимо мікросервіс для авторизації
+      private readonly authClient: ClientProxy,
   ) {}
 
+  // Створення нового користувача
   async createUser(name: string, email: string, password: string) {
-    try {
-      const hashedPassword: string = await bcrypt.hash(password, 10);
-      const newUser = this.userRepository.create({
-        name,
-        email,
-        password: hashedPassword,
-      });
-      return await this.userRepository.save(newUser);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error('Unknown error', error);
-      }
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = this.userRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+    return this.userRepository.save(newUser);
   }
 
+  // Отримання всіх користувачів
   async getAllUsers() {
     return this.userRepository.find({
       select: ['id', 'name', 'email', 'role', 'created_at'],
     });
   }
 
-  async getUserByEmail(email: string) {
+  // Пошук користувача за email
+  async findUserByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  // Отримання користувача за ID
   async getUserById(id: string): Promise<User> {
-    // UUID — это строка
     const user = await this.userRepository.findOne({
-      where: { id }, // Не конвертируем в Number, UUID строка
+      where: { id },
       select: ['id', 'name', 'email', 'role', 'created_at'],
     });
 
@@ -53,7 +59,8 @@ export class UserService {
     return user;
   }
 
-  async login(email: string, password: string) {
+  // Логін користувача
+  async login(email: string, password: string): Promise<Tokens> {
     const user = await this.userRepository.findOne({ where: { email } });
 
     if (!user) {
@@ -65,39 +72,39 @@ export class UserService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      created_at: user.created_at,
+    // 🔐 Відправка даних до AUTH_SERVICE через RabbitMQ для генерації токенів
+    const payload = {
+      member_id: user.id,
+      role_id: user.role,
     };
+
+    return await lastValueFrom<Tokens>(
+        this.authClient.send(patterns.AUTH.TOKENS, payload),
+    );
   }
 
+  // Видалення користувача
   async deleteUser(id: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id } });
-
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
-
     await this.userRepository.delete(id);
   }
 
+  // Оновлення користувача
   async updateUser(
-    id: string,
-    data: { name: string; email: string; password: string },
+      id: string,
+      data: { name: string; email: string; password: string },
   ): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
-
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Оновлюємо дані
     user.name = data.name;
     user.email = data.email;
-    user.password = await bcrypt.hash(data.password, 10); // хеш нового паролю
+    user.password = await bcrypt.hash(data.password, 10);
 
     return this.userRepository.save(user);
   }

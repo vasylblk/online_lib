@@ -46,4 +46,9 @@ export class UserController {
   async deleteUser(@Payload() id: string) {
     return this.userService.deleteUser(id);
   }
+
+  @MessagePattern({ cmd: 'find_user_by_email' })
+  async findUserByEmail(@Payload() email: string) {
+    return this.userService.findUserByEmail(email);
+  }
 }

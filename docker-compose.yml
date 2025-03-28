@@ -18,12 +18,13 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: users_db
     ports:
       - "5432:5432"
     volumes:
-      - "pgdata:/var/lib/postgresql/data"
+      - pgdata:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     restart: always
+
 
   api-gateway:
     build:
@@ -57,6 +58,22 @@ services:
         condition: service_started
     ports:
       - "5001:5001"
+
+  book-service:
+    build:
+      context: ./book-service
+    container_name: book-service
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      DATABASE_URL: postgres://postgres:password@postgres:5432/postgres
+      PORT: 5002
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    ports:
+      - "5002:5002"
 
 volumes:
   pgdata:

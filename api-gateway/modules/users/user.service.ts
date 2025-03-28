@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { timeout, catchError, throwError, firstValueFrom } from 'rxjs';
+import { retry } from 'rxjs/operators';
 
 import { User } from './dto';
 import { patterns } from '../patterns';
@@ -15,9 +16,10 @@ export class UserService {
 
   private async send(pattern: any, data: any): Promise<any> {
     const res$ = this.userClient.send(pattern, data).pipe(
-      timeout(30000),
+      timeout(10000), // 10 секунд — достаточно для ответа
+      retry(2), // повторы при ошибке: всего 3 попытки
       catchError((e: Error) => {
-        this.logger.error(`Ошибка запроса к User Service: ${e.message}`);
+        this.logger.error(`❌ Ошибка запроса к User Service: ${e.message}`);
         return throwError(() => e);
       }),
     );
