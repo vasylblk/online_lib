@@ -7,41 +7,65 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
+import { Role } from '../../entities/role.entity';
 import * as bcrypt from 'bcryptjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { lastValueFrom } from 'rxjs';
 import { patterns } from '../patterns';
-import { Tokens } from '../auth/dto'; // Перевірте, чи у вас є такий DTO
+import { Tokens } from '../auth/dto';
+import { UserDTO } from './dto';
 
 @Injectable()
 export class UserService {
   constructor(
-      @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
 
-      @Inject('AUTH_SERVICE') // 🔐 Інжектимо мікросервіс для авторизації
-      private readonly authClient: ClientProxy,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+
+    @Inject('AUTH_SERVICE')
+    private readonly authClient: ClientProxy,
   ) {}
 
   // Створення нового користувача
-  async createUser(name: string, email: string, password: string) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = this.userRepository.create({
-      name,
-      email,
-      password: hashedPassword,
+  async createUser(dto: UserDTO): Promise<User> {
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    // 👇 Навіть якщо в dto прийде 'null' або '', ставимо роль за замовчуванням
+    const roleName =
+      !dto.role || dto.role === 'null' || dto.role === '' ? 'user' : dto.role;
+
+    const role = await this.roleRepository.findOne({
+      where: { name: roleName },
     });
+
+    if (!role) {
+      throw new NotFoundException(`Role '${roleName}' not found`);
+    }
+
+    const newUser = new User();
+    newUser.name = dto.name;
+    newUser.email = dto.email;
+    newUser.password = hashedPassword;
+    newUser.role = role;
+    newUser.role_id = role.id;
+
+    console.log('📌 Role ID:', role.id); // отладка
+
     return this.userRepository.save(newUser);
+
   }
 
   // Отримання всіх користувачів
-  async getAllUsers() {
+  async getAllUsers(): Promise<User[]> {
     return this.userRepository.find({
       select: ['id', 'name', 'email', 'role', 'created_at'],
     });
   }
 
   // Пошук користувача за email
-  async findUserByEmail(email: string) {
+  async findUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
 
@@ -72,14 +96,13 @@ export class UserService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // 🔐 Відправка даних до AUTH_SERVICE через RabbitMQ для генерації токенів
     const payload = {
       member_id: user.id,
-      role_id: user.role,
+      role_id: user.role_id,
     };
 
     return await lastValueFrom<Tokens>(
-        this.authClient.send(patterns.AUTH.TOKENS, payload),
+      this.authClient.send(patterns.AUTH.TOKENS, payload),
     );
   }
 
@@ -94,8 +117,8 @@ export class UserService {
 
   // Оновлення користувача
   async updateUser(
-      id: string,
-      data: { name: string; email: string; password: string },
+    id: string,
+    data: { name: string; email: string; password: string },
   ): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {

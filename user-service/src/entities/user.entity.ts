@@ -18,8 +18,8 @@ export class User {
   @Column({ unique: true })
   password: string;
 
-  @Column({ unique: true })
-  username: string;
+  // @Column({ unique: true })
+  // username: string;
 
   @ManyToOne(() => Role)
   @JoinColumn({ name: 'role_id' })

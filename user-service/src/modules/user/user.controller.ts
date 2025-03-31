@@ -6,11 +6,12 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @MessagePattern({ cmd: 'register_user' })
+  @MessagePattern({ cmd: 'create_user' }) // 🔥 саме create_user
   async registerUser(
     @Payload() data: { name: string; email: string; password: string },
   ) {
-    return this.userService.createUser(data.name, data.email, data.password);
+    console.log('[UserService] Received create_user with payload:', data);
+    return this.userService.createUser(data);
   }
 
   @MessagePattern({ cmd: 'login_user' })

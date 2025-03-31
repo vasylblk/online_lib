@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { UserModule } from './modules/user/user.module';
-import { AppController } from './app.controller'; // Додаємо контролер
-import { AppService } from './app.service'; // Додаємо сервіс
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -28,29 +27,9 @@ import { AppService } from './app.service'; // Додаємо сервіс
       }),
     }),
 
-    ClientsModule.registerAsync([
-      {
-        name: 'RABBITMQ_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.RMQ,
-          options: {
-            urls: [
-              configService.get<string>('RABBITMQ_URL') ||
-                'amqp://guest:guest@localhost:5672',
-            ],
-            queue:
-              configService.get<string>('USER_SERVICE_QUEUE') || 'user-service',
-            queueOptions: { durable: false },
-          },
-        }),
-      },
-    ]),
-
-    UserModule,
+    UserModule, // 👈 тут знаходиться UserController з @MessagePattern(...)
   ],
-  controllers: [AppController], // Додаємо AppController
-  providers: [AppService], // Додаємо AppService
+  controllers: [AppController], // якщо AppController містить лише REST — можеш навіть прибрати
+  providers: [AppService],
 })
 export class AppModule {}

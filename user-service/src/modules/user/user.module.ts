@@ -5,10 +5,12 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { User } from '../../entities/user.entity'; // Імпортуємо User Entity
 import { AuthModule } from '../auth/auth.module'; // Імпортуємо AuthModule для AUTH_SERVICE
+import { Role } from '../../entities/role.entity';
+
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]), // Реєструємо UserRepository
+    TypeOrmModule.forFeature([User, Role]), // Реєструємо UserRepository
     AuthModule, // Імпортуємо AuthModule для отримання AUTH_SERVICE
   ],
   controllers: [UserController],
@@ -25,6 +27,7 @@ import { AuthModule } from '../auth/auth.module'; // Імпортуємо AuthMo
             'RABBITMQ_URL або USER_SERVICE_QUEUE не заданы в .env файле',
           );
         }
+
 
         return ClientProxyFactory.create({
           transport: Transport.RMQ,

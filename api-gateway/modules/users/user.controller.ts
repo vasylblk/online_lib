@@ -14,24 +14,25 @@ import { ClientProxy } from '@nestjs/microservices';
 import { User } from './dto';
 import { JwtAuthGuard } from '../../guards/auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator'; // 🆕
+import { Roles } from '../../common/decorators/roles.decorator';
 import { firstValueFrom } from 'rxjs';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard) // ✅ Глобальний захист токеном + ролями
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
   constructor(@Inject('USER_SERVICE') private readonly client: ClientProxy) {}
 
-  // ❗ Відкрита (без токена)
+  // Відкрита (без токена)
   @Post('register')
   async register(@Body() user: User): Promise<any> {
     this.logger.log('Registering user...');
+    console.log('[API] Sending command: create_user with payload:', user); //
     return await firstValueFrom(this.client.send({ cmd: 'create_user' }, user));
   }
 
-  // ❗ Відкрита (без токена)
+
+  // Відкрита (без токена)
   @Post('login')
   async login(
     @Body() credentials: { email: string; password: string },
@@ -41,23 +42,26 @@ export class UserController {
     );
   }
 
-  // 🔐 Тільки для адміністраторів
+  // Тільки для адміністраторів
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async getUsers(): Promise<any> {
     return await firstValueFrom(this.client.send({ cmd: 'get_users' }, {}));
   }
 
-  // 🔐 Авторизований (будь-який)
+  // Авторизований (будь-який)
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   async getUserById(@Param('id') id: string): Promise<any> {
     return await firstValueFrom(
       this.client.send({ cmd: 'get_user_by_id' }, id),
     );
   }
 
-  // 🔐 Авторизований (будь-який)
+  // Авторизований (будь-який)
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async updateUser(
     @Param('id') id: string,
     @Body() userDto: User,
@@ -67,14 +71,15 @@ export class UserController {
     );
   }
 
-  // 🔐 Тільки для адміністраторів
+  // Тільки для адміністраторів
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async deleteUser(@Param('id') id: string): Promise<any> {
     return await firstValueFrom(this.client.send({ cmd: 'delete_user' }, id));
   }
 
-  // ❗ Відкрита (скидання паролю без токена)
+  // Відкрита (скидання паролю без токена)
   @Post('reset-password')
   async resetPassword(@Body('email') email: string): Promise<any> {
     return await firstValueFrom(

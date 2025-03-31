@@ -19,7 +19,7 @@ export class UserService {
       timeout(10000), // 10 секунд — достаточно для ответа
       retry(2), // повторы при ошибке: всего 3 попытки
       catchError((e: Error) => {
-        this.logger.error(`❌ Ошибка запроса к User Service: ${e.message}`);
+        this.logger.error(`Ошибка запроса к User Service: ${e.message}`);
         return throwError(() => e);
       }),
     );
