@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { Role } from './entities/role.entity';
 import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module'; // 👈 Додай!
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -20,16 +22,17 @@ import { AppService } from './app.service';
         username: configService.get<string>('DATABASE_USER') || 'postgres',
         password: configService.get<string>('DATABASE_PASSWORD') || 'password',
         database: configService.get<string>('DATABASE_NAME') || 'users_db',
-        entities: [User],
+        entities: [User, Role],
         autoLoadEntities: true,
         synchronize: true,
         logging: true,
       }),
     }),
 
-    UserModule, // 👈 тут знаходиться UserController з @MessagePattern(...)
+    UserModule, // 👈 обов’язково
+    AuthModule, // 👈 обов’язково
   ],
-  controllers: [AppController], // якщо AppController містить лише REST — можеш навіть прибрати
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

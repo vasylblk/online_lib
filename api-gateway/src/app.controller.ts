@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { Public } from '../common/decorators/public.decorator'; // ✅ Додано
 
 interface UserResponse {
   id: string;
@@ -23,15 +24,15 @@ export class AppController {
   ) {}
 
   @Post('register')
+  @Public() // ✅ Відкрита реєстрація
   async createUser(
     @Body() data: { name: string; email: string; password: string },
   ): Promise<UserResponse> {
     return firstValueFrom(
-      this.userService.send<UserResponse>({ cmd: 'register_user' }, data),
+      this.userService.send<UserResponse>({ cmd: 'create_user' }, data),
     );
   }
 
-  // обнова
   @Put(':id')
   async updateUser(
     @Param('id') id: string,
@@ -42,7 +43,6 @@ export class AppController {
     );
   }
 
-  // по ID
   @Get(':id')
   async getUserById(@Param('id') id: string): Promise<UserResponse> {
     return firstValueFrom(
@@ -50,11 +50,19 @@ export class AppController {
     );
   }
 
-  // всіх
   @Get()
   async getUsers(): Promise<UserResponse[]> {
     return firstValueFrom(
       this.userService.send<UserResponse[]>({ cmd: 'get_users' }, {}),
+    );
+  }
+
+  @Post('login')
+  @Public() // ✅ Відкритий логін
+  async login(@Body() credentials: { email: string; password: string }) {
+    console.log('[GATEWAY] Sending cmd: login_user with payload:', credentials);
+    return firstValueFrom(
+      this.userService.send({ cmd: 'login_user' }, credentials),
     );
   }
 }

@@ -8,12 +8,14 @@ import {
   Delete,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { BookService } from './book.service';
 import { CreateBookDto, UpdateBookDto } from './dto/book.dto';
 import { JwtAuthGuard } from '../../guards/auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { Public } from '../../common/decorators/public.decorator'; // 👈 Імпорт декоратора
 
 @Controller('books')
 export class BookController {
@@ -21,38 +23,76 @@ export class BookController {
 
   // 🔓 Публічно — отримання всіх книг
   @Get()
-  getBooks(@Query() query: any) {
-    return this.bookService.getBooks(query);
+  @Public()
+  async getBooks(
+    @Query()
+    query: {
+      genre?: string;
+      author?: string;
+      publication_year?: number;
+    },
+  ) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.bookService.getBooks(query);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Error retrieving books');
+    }
   }
 
   // 🔓 Публічно — отримання книги за ID
   @Get(':id')
-  getBook(@Param('id') id: string) {
-    return this.bookService.getBookById(id);
+  @Public()
+  async getBook(@Param('id') id: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.bookService.getBookById(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Error retrieving the book');
+    }
   }
 
   // 🔐 Тільки для адміністраторів — створення нової книги
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  createBook(@Body() dto: CreateBookDto) {
-    return this.bookService.createBook(dto);
+  async createBook(@Body() dto: CreateBookDto) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.bookService.createBook(dto);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Error creating book');
+    }
   }
 
   // 🔐 Тільки для адміністраторів — редагування книги
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  updateBook(@Param('id') id: string, @Body() dto: UpdateBookDto) {
-    return this.bookService.updateBook(id, dto);
+  async updateBook(@Param('id') id: string, @Body() dto: UpdateBookDto) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.bookService.updateBook(id, dto);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Error updating book');
+    }
   }
 
-  // (не обов’язковий, але залишимо приклад для повноти)
+  // 🔐 Тільки для адміністраторів — видалення книги
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  deleteBook(@Param('id') id: string) {
-    return this.bookService.deleteBook(id);
+  async deleteBook(@Param('id') id: string) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return await this.bookService.deleteBook(id);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      throw new BadRequestException('Error deleting book');
+    }
   }
-
 }

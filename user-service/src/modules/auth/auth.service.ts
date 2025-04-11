@@ -7,8 +7,8 @@ import { TokenPayload, Tokens } from './dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+      private readonly jwtService: JwtService,
+      private readonly configService: ConfigService,
   ) {}
 
   async generateTokens(payload: TokenPayload): Promise<Tokens> {
@@ -16,13 +16,13 @@ export class AuthService {
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_SECRET') || 'secret',
         expiresIn:
-          this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
+            this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
       }),
       this.jwtService.signAsync(payload, {
         secret:
-          this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
+            this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
         expiresIn:
-          this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
+            this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
       }),
     ]);
 
@@ -46,7 +46,7 @@ export class AuthService {
     try {
       return this.jwtService.verify(token, {
         secret:
-          this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
+            this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
       });
     } catch (error) {
       throw new RpcException('Invalid or expired refresh token');

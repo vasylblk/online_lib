@@ -7,35 +7,34 @@ import * as path from 'path';
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 async function bootstrap() {
-  console.log('Loaded RABBITMQ_URL:', process.env.RABBITMQ_URL);
-
   const rabbitMqUrl: string | undefined = process.env.RABBITMQ_URL;
+  const queueName: string =
+    process.env.USER_SERVICE_QUEUE || 'user_service_queue';
+
   if (!rabbitMqUrl) {
     console.error('❌ RABBITMQ_URL is not defined in .env file');
     process.exit(1);
   }
 
   try {
-    // Запуск HTTP API
-    const app = await NestFactory.create(AppModule);
-    const port = process.env.PORT || 3000;
-    await app.listen(port);
-    console.log(`✅ HTTP API is running on http://localhost:${port}`);
-
-    // Запуск мікросервісу
-    const microservice =
-      await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
+    const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+      AppModule,
+      {
         transport: Transport.RMQ,
         options: {
           urls: [rabbitMqUrl],
-          queue: 'user_service_queue',
+          queue: process.env.USER_SERVICE_QUEUE,
           queueOptions: { durable: false },
         },
-      });
+      },
+    );
 
-    await microservice.listen();
     console.log(
-      `✅ User Service is running and connected to RabbitMQ on ${rabbitMqUrl}`,
+      `📡 Connecting to RabbitMQ at ${rabbitMqUrl} (queue: ${queueName})`,
+    );
+    await app.listen();
+    console.log(
+      `✅ User Service is listening on queue "${queueName}" via RabbitMQ`,
     );
   } catch (error) {
     console.error('❌ Error starting User Service:', error);

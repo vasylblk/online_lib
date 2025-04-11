@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { BookService } from './book.service';
 import { BookController } from './book.controller';
+import { BookService } from './book.service';
 
 @Module({
   imports: [
@@ -10,8 +10,17 @@ import { BookController } from './book.controller';
         name: 'BOOK_SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://localhost:5672'], // заміни на свій адрес RabbitMQ
-          queue: 'books_queue',
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.BOOK_SERVICE_QUEUE || 'books_queue',
+          queueOptions: { durable: false },
+        },
+      },
+      {
+        name: 'AUTH_SERVICE', // 👈 Додай цю частину!
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.AUTH_SERVICE_QUEUE || 'auth_service_queue',
           queueOptions: { durable: false },
         },
       },

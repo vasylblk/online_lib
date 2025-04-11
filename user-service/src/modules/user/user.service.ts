@@ -2,21 +2,21 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
-  Inject,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { Role } from '../../entities/role.entity';
 import * as bcrypt from 'bcryptjs';
-import { ClientProxy } from '@nestjs/microservices';
-import { lastValueFrom } from 'rxjs';
-import { patterns } from '../patterns';
 import { Tokens } from '../auth/dto';
 import { UserDTO } from './dto';
+import { AuthService } from '../auth/auth.service'; // 🔥 Прямий імпорт
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -24,15 +24,11 @@ export class UserService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
 
-    @Inject('AUTH_SERVICE')
-    private readonly authClient: ClientProxy,
+    private readonly authService: AuthService, // ✅ Прямий інжект сервісу
   ) {}
 
-  // Створення нового користувача
   async createUser(dto: UserDTO): Promise<User> {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    // 👇 Навіть якщо в dto прийде 'null' або '', ставимо роль за замовчуванням
     const roleName =
       !dto.role || dto.role === 'null' || dto.role === '' ? 'user' : dto.role;
 
@@ -51,25 +47,21 @@ export class UserService {
     newUser.role = role;
     newUser.role_id = role.id;
 
-    console.log('📌 Role ID:', role.id); // отладка
+    this.logger.log(`📌 Created user with role ID: ${role.id}`);
 
     return this.userRepository.save(newUser);
-
   }
 
-  // Отримання всіх користувачів
   async getAllUsers(): Promise<User[]> {
     return this.userRepository.find({
       select: ['id', 'name', 'email', 'role', 'created_at'],
     });
   }
 
-  // Пошук користувача за email
   async findUserByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  // Отримання користувача за ID
   async getUserById(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
@@ -83,15 +75,19 @@ export class UserService {
     return user;
   }
 
-  // Логін користувача
   async login(email: string, password: string): Promise<Tokens> {
+    this.logger.log('🔍 Шукаємо користувача по email...');
     const user = await this.userRepository.findOne({ where: { email } });
+    this.logger.log('✅ Знайдено користувача: ' + user?.id);
 
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`);
     }
 
+    this.logger.log('🔐 Перевіряємо пароль...');
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    this.logger.log('✅ Пароль валідний: ' + isPasswordValid);
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -101,12 +97,10 @@ export class UserService {
       role_id: user.role_id,
     };
 
-    return await lastValueFrom<Tokens>(
-      this.authClient.send(patterns.AUTH.TOKENS, payload),
-    );
+    this.logger.log('🧾 Генеруємо токени...');
+    return this.authService.generateTokens(payload);
   }
 
-  // Видалення користувача
   async deleteUser(id: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
@@ -115,7 +109,6 @@ export class UserService {
     await this.userRepository.delete(id);
   }
 
-  // Оновлення користувача
   async updateUser(
     id: string,
     data: { name: string; email: string; password: string },
@@ -128,7 +121,13 @@ export class UserService {
     user.name = data.name;
     user.email = data.email;
     user.password = await bcrypt.hash(data.password, 10);
+    user.updated_at = new Date();
 
     return this.userRepository.save(user);
+  }
+
+  async resetPassword(email: string): Promise<{ message: string }> {
+    this.logger.log(`🔧 Resetting password for email: ${email}`);
+    return { message: `Reset password request processed for ${email}` };
   }
 }

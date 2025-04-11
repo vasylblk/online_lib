@@ -18,24 +18,24 @@ export class RolesGuard implements CanActivate {
     );
 
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true;
+      return true; // Если роли не требуются, доступ разрешён
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const req = context.switchToHttp().getRequest();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment,@typescript-eslint/no-unsafe-member-access
-    const user = req.user;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment
+    const user = req.user; // Информация о пользователе из JwtAuthGuard
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (!user || !user.role) {
       throw new ForbiddenException('Роль не знайдена');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-argument
     if (!requiredRoles.includes(user.role)) {
       throw new ForbiddenException('Доступ заборонено: недостатньо прав');
     }
 
-    return true;
+    return true; // Доступ разрешён, если роль подходит
   }
 }
