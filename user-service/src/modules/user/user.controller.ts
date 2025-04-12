@@ -19,7 +19,12 @@ export class UserController {
     @Payload() data: { name: string; email: string; password: string },
   ) {
     this.logger.log('📩 Received create_user:', data);
-    return this.userService.createUser(data);
+    try {
+      return await this.userService.createUser(data);
+    } catch (error) {
+      this.logger.error('❌ Error creating user:', error);
+      throw error; // обов’язково пробросити RpcException назад
+    }
   }
 
   @MessagePattern({ cmd: 'login_user' })

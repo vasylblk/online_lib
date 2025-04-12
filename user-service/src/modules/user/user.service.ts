@@ -11,7 +11,9 @@ import { Role } from '../../entities/role.entity';
 import * as bcrypt from 'bcryptjs';
 import { Tokens } from '../auth/dto';
 import { UserDTO } from './dto';
-import { AuthService } from '../auth/auth.service'; // 🔥 Прямий імпорт
+import { AuthService } from '../auth/auth.service';
+import { RpcException } from '@nestjs/microservices';
+import { QueryFailedError } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -47,9 +49,30 @@ export class UserService {
     newUser.role = role;
     newUser.role_id = role.id;
 
-    this.logger.log(`📌 Created user with role ID: ${role.id}`);
+    this.logger.log(`📌 Creating user with email: ${dto.email}`);
 
-    return this.userRepository.save(newUser);
+    try {
+      return await this.userRepository.save(newUser);
+    } catch (error) {
+      // Перевіряємо, чи це помилка TypeORM і чи це дублікат
+      if (
+        error instanceof QueryFailedError &&
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (error as any).code === '23505'
+      ) {
+        this.logger.warn(`⚠️ Email already exists: ${dto.email}`);
+        throw new RpcException({
+          statusCode: 409,
+          message: `Користувач з поштою ${dto.email} вже існує`,
+        });
+      }
+
+      this.logger.error('❌ Unknown DB error during user creation', error);
+      throw new RpcException({
+        statusCode: 500,
+        message: 'Внутрішня помилка при створенні користувача',
+      });
+    }
   }
 
   async getAllUsers(): Promise<User[]> {
