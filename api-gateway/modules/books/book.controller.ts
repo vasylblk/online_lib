@@ -59,6 +59,7 @@ export class BookController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async createBook(@Body() dto: CreateBookDto) {
+    console.log('[GATEWAY] Sending cmd: create_book with payload:', dto);
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return await this.bookService.createBook(dto);

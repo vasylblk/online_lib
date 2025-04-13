@@ -10,14 +10,24 @@ export class BookController {
   constructor(private readonly bookService: BookService) {}
 
   @MessagePattern(patterns.BOOK.CREATE)
-  create(@Payload() dto: CreateBookDto) {
-    return this.bookService.create(dto);
+  async create(@Payload() dto: CreateBookDto) {
+    console.log('📥 [BOOK_SERVICE] Створення книги:', dto);
+    try {
+      const result = await this.bookService.create(dto);
+      console.log('✅ Книга створена:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Помилка при створенні книги:', error);
+      throw error;
+    }
   }
 
   @MessagePattern(patterns.BOOK.FIND_ALL)
   findBooks(@Payload() query: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { genre, author, publication_year } = query;
     if (genre || author || publication_year) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       return this.bookService.findFiltered(genre, author, publication_year);
     }
     return this.bookService.findAll();

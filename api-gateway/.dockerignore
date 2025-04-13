@@ -1,0 +1,28 @@
+# 📦 Node.js залежності
+node_modules
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# 🏗️ Збірка
+dist
+build
+*.tsbuildinfo
+
+# 🧪 Покриття тестів
+coverage
+
+# 🔐 Конфігураційні файли
+*.log
+
+# 🧾 Git файли
+.git
+.gitignore
+
+# 💻 IDE / кеші
+.vscode
+.idea
+.cache
+.tmp
+.DS_Store
+Thumbs.db
