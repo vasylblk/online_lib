@@ -1,21 +1,24 @@
-# ���������� Node.js �����
 FROM node:20
 
-
-# ������������� ������� ����������
 WORKDIR /app
 
-# �������� package.json � package-lock.json
+# Копіюємо package.json і package-lock.json
 COPY package*.json ./
 
-# ������������� �����������
-RUN npm install --only=production
+# Встановлюємо всі залежності, включаючи dev, бо будемо будувати
+RUN npm install
 
-# �������� ���� ��� �������
+# Копіюємо увесь проєкт
 COPY . .
 
-# ��������� ����
+# Будуємо TypeScript в JavaScript (фолдера dist)
+RUN npm run build
+
+# Опційно: очищаємо dev-залежності
+RUN npm prune --production
+
+# Відкриваємо порт (для debug, якщо потрібно)
 EXPOSE 5001
 
-# ��������� ����������
-CMD ["npm", "run", "start"]
+# Запускаємо зібраний файл
+CMD ["npm", "run", "start:prod"]

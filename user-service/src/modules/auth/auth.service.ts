@@ -48,6 +48,7 @@ export class AuthService {
         secret:
             this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
       });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new RpcException('Invalid or expired refresh token');
     }
