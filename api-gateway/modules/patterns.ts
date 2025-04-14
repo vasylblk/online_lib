@@ -22,4 +22,10 @@ export const patterns = {
     TOKENS: { cmd: 'auth_generate_tokens' },
     REFRESH: { cmd: 'auth_refresh_tokens' },
   },
+
+  READING: {
+    CREATE: { cmd: 'create_reading_progress' },
+    GET_BY_USER: { cmd: 'get_user_progress' },
+    UPDATE: { cmd: 'update_reading_progress' },
+  },
 };

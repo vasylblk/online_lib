@@ -8,12 +8,14 @@ import { UserService } from '../modules/users/user.service';
 import { BookService } from '../modules/books/book.service';
 import { BookModule } from '../modules/books/book.module';
 import { UserModule } from '../modules/users/user.module';
+import { ReadingModule } from '../modules/reading/reading.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
 @Module({
   imports: [
+    ReadingModule,
     BookModule,
     UserModule,
     ClientsModule.register([
@@ -44,6 +46,16 @@ dotenv.config();
           queueOptions: { durable: false },
         },
       },
+      {
+        name: 'READING_SERVICE',
+        transport: Transport.RMQ,
+        options: {
+          urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
+          queue: process.env.READING_SERVICE_QUEUE || 'reading_progress_queue',
+          queueOptions: { durable: false },
+        },
+      },
+
     ]),
   ],
   controllers: [AppController, UserController, BookController],
