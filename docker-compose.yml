@@ -1,0 +1,105 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: users_db
+      PORT: 5001
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    ports:
+      - "5001:5001"
+
+  book-service:
+    build:
+      context: ./book-service
+    container_name: book-service
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: books_db
+      PORT: 5002
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    ports:
+      - "5002:5002"
+
+  reading-service:
+    build:
+      context: ./reading-service
+    container_name: reading-service
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: reading_db
+      PORT: 5003
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+    ports:
+      - "5003:5003"
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      USER_SERVICE_QUEUE: user_service_queue
+      BOOK_SERVICE_QUEUE: books_queue
+      READING_SERVICE_QUEUE: reading_progress_queue
+      PORT: 3000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+
+
+volumes:
+  pgdata:
