@@ -31,7 +31,7 @@ async function bootstrap() {
 
     console.log(`🚀 API Gateway is running on http://localhost:${port}/api`);
   } catch (error) {
-    console.error('❌ Ошибка при запуске API Gateway:', error);
+    console.error('❌ Помилка при запуску API Gateway:', error);
     process.exit(1);
   }
 }
