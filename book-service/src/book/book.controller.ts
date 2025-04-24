@@ -1,50 +1,32 @@
-// src/book/book.micro.controller.ts
-import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { BookService } from './book.service';
-import { CreateBookDto, UpdateBookDto } from './dto/book.dto';
-import { patterns } from '../patterns';
+// src/modules/books/book.controller.ts
+import { Controller, Post, Get, Param, Body, Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { CreateBookDto } from './dto/book.dto';
+import { patterns } from '../patterns'; // шлях може трохи відрізнятись
 
-@Controller()
+@Controller('books')
 export class BookController {
-  constructor(private readonly bookService: BookService) {}
+  constructor(
+    @Inject('BOOK_SERVICE') private readonly bookService: ClientProxy,
+  ) {}
 
-  @MessagePattern(patterns.BOOK.CREATE)
-  async create(@Payload() dto: CreateBookDto) {
-    console.log('📥 [BOOK_SERVICE] Створення книги:', dto);
-    try {
-      const result = await this.bookService.create(dto);
-      console.log('✅ Книга створена:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ Помилка при створенні книги:', error);
-      throw error;
-    }
+  @Post()
+  async create(@Body() dto: CreateBookDto) {
+    console.log('[API GATEWAY] ▶️ Створення книги:', dto);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return firstValueFrom(this.bookService.send(patterns.BOOK.CREATE, dto));
   }
 
-  @MessagePattern(patterns.BOOK.FIND_ALL)
-  findBooks(@Payload() query: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const { genre, author, publication_year } = query;
-    if (genre || author || publication_year) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      return this.bookService.findFiltered(genre, author, publication_year);
-    }
-    return this.bookService.findAll();
+  @Get()
+  async findAll() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return firstValueFrom(this.bookService.send(patterns.BOOK.FIND_ALL, {}));
   }
 
-  @MessagePattern(patterns.BOOK.FIND_BY_ID)
-  findOne(@Payload() id: string) {
-    return this.bookService.findOne(id);
-  }
-
-  @MessagePattern(patterns.BOOK.UPDATE)
-  update(@Payload() payload: { id: string; dto: UpdateBookDto }) {
-    return this.bookService.update(payload.id, payload.dto);
-  }
-
-  @MessagePattern(patterns.BOOK.DELETE)
-  delete(@Payload() id: string) {
-    return this.bookService.remove(id);
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return firstValueFrom(this.bookService.send(patterns.BOOK.FIND_BY_ID, id));
   }
 }
