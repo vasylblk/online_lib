@@ -1,4 +1,3 @@
-// src/book/book.micro.controller.ts
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { BookService } from './book.service';
@@ -9,9 +8,9 @@ import { patterns } from '../patterns';
 export class BookController {
   constructor(private readonly bookService: BookService) {}
 
-  @MessagePattern(patterns.BOOK.CREATE)
+  @MessagePattern({ cmd: 'create_book' })
   async create(@Payload() dto: CreateBookDto) {
-    console.log('📥 [BOOK_SERVICE] Створення книги:', dto);
+    console.log('📥 [BookController] Отримано запит на створення книги', dto);
     try {
       const result = await this.bookService.create(dto);
       console.log('✅ Книга створена:', result);

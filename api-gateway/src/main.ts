@@ -13,6 +13,7 @@ dotenv.config({ path: envPath });
 console.log('Using .env from:', envPath);
 console.log('Loaded RABBITMQ_URL:', process.env.RABBITMQ_URL);
 console.log('Loaded USER_SERVICE_QUEUE:', process.env.USER_SERVICE_QUEUE);
+console.log('Loaded BOOK_SERVICE_QUEUE:', process.env.BOOK_SERVICE_QUEUE);
 console.log('Loaded PORT:', process.env.PORT);
 
 async function bootstrap() {

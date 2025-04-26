@@ -20,7 +20,7 @@ import { UserService } from './user.service';
         transport: Transport.RMQ,
         options: {
           urls: [process.env.RABBITMQ_URL || 'amqp://localhost:5672'],
-          queue: process.env.AUTH_SERVICE_QUEUE || 'auth_service_queue',
+          queue: process.env.AUTH_SERVICE_QUEUE || 'user_service_queue',
           queueOptions: { durable: false },
         },
       },

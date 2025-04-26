@@ -12,9 +12,14 @@ export class BookService {
   ) {}
 
   async create(createBookDto: CreateBookDto): Promise<Book> {
+    console.log('➡️ [BookService] Створення книги почато', createBookDto);
     const book = this.bookRepository.create(createBookDto);
-    return await this.bookRepository.save(book);
+    console.log('🛠️ [BookService] Книга створена локально, зберігаємо...');
+    const savedBook = await this.bookRepository.save(book);
+    console.log('✅ [BookService] Книга успішно збережена в БД:', savedBook);
+    return savedBook;
   }
+
 
   async findAll(): Promise<Book[]> {
     return await this.bookRepository.find();

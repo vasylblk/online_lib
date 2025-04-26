@@ -1,3 +1,4 @@
+// Оновлений AuthService з підтримкою role
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -7,8 +8,8 @@ import { TokenPayload, Tokens } from './dto';
 @Injectable()
 export class AuthService {
   constructor(
-      private readonly jwtService: JwtService,
-      private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async generateTokens(payload: TokenPayload): Promise<Tokens> {
@@ -16,13 +17,13 @@ export class AuthService {
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_SECRET') || 'secret',
         expiresIn:
-            this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
+          this.configService.get<string>('JWT_ACCESS_EXPIRATION') || '15m',
       }),
       this.jwtService.signAsync(payload, {
         secret:
-            this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
+          this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
         expiresIn:
-            this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
+          this.configService.get<string>('JWT_REFRESH_EXPIRATION') || '7d',
       }),
     ]);
 
@@ -34,7 +35,7 @@ export class AuthService {
 
   async verifyAccessToken(token: string): Promise<TokenPayload> {
     try {
-      return this.jwtService.verify(token, {
+      return this.jwtService.verify<TokenPayload>(token, {
         secret: this.configService.get<string>('JWT_SECRET') || 'secret',
       });
     } catch (error) {
@@ -44,11 +45,10 @@ export class AuthService {
 
   async verifyRefreshToken(token: string): Promise<TokenPayload> {
     try {
-      return this.jwtService.verify(token, {
+      return this.jwtService.verify<TokenPayload>(token, {
         secret:
-            this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
+          this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh',
       });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new RpcException('Invalid or expired refresh token');
     }
@@ -59,6 +59,7 @@ export class AuthService {
     return this.generateTokens({
       member_id: decoded.member_id,
       role_id: decoded.role_id,
+      role: decoded.role,
     });
   }
 }

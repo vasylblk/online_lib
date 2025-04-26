@@ -57,7 +57,7 @@ export class UserService {
       // Перевіряємо, чи це помилка TypeORM і чи це дублікат
       if (
         error instanceof QueryFailedError &&
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         (error as any).code === '23505'
       ) {
         this.logger.warn(`⚠️ Email already exists: ${dto.email}`);
@@ -100,13 +100,18 @@ export class UserService {
 
   async login(email: string, password: string): Promise<Tokens> {
     this.logger.log('🔍 Шукаємо користувача по email...');
-    const user = await this.userRepository.findOne({ where: { email } });
-    this.logger.log('✅ Знайдено користувача: ' + user?.id);
+
+    // Обов'язково підтягуємо роль через relations: ['role']
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['role'], // 👈 Додано!
+    });
 
     if (!user) {
       throw new NotFoundException(`User with email ${email} not found`);
     }
 
+    this.logger.log('✅ Знайдено користувача: ' + user.id);
     this.logger.log('🔐 Перевіряємо пароль...');
     const isPasswordValid = await bcrypt.compare(password, user.password);
     this.logger.log('✅ Пароль валідний: ' + isPasswordValid);
@@ -118,11 +123,14 @@ export class UserService {
     const payload = {
       member_id: user.id,
       role_id: user.role_id,
+      role: user.role.name, // 👈 ОБОВʼЯЗКОВО додаємо роль!
     };
 
     this.logger.log('🧾 Генеруємо токени...');
+    // @ts-ignore
     return this.authService.generateTokens(payload);
   }
+
 
   async deleteUser(id: string): Promise<void> {
     const user = await this.userRepository.findOne({ where: { id } });
@@ -149,7 +157,7 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async resetPassword(email: string): Promise<{ message: string }> {
+  resetPassword(email: string): { message: string } {
     this.logger.log(`🔧 Resetting password for email: ${email}`);
     return { message: `Reset password request processed for ${email}` };
   }
